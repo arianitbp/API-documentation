@@ -83,7 +83,7 @@ apiRoutes.get('/db', function (request, response) {
                             }
                         }
                     }
-                    response.json({success: "Database Readed successfuly", data: result.rows});
+                    response.json({success: "Database readed with success", data: result.rows});
                 }
             }else {
                 if (err) {
@@ -127,7 +127,7 @@ apiRoutes.get('/db/:id', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.status(404).send({failed: "The specified contact could not be found"});
+                        response.status(404).send({failed: "Not Found – The specified contact could not be found"});
                     }
                 }
             });
@@ -231,7 +231,7 @@ apiRoutes.post('/db', function (request, response) {
                     response.json({success: "false", message: err});
                 }
                 {
-                    response.json({success: "Contact inserted successfully into database"});
+                    response.json({success: "Contact inserted with success into database"});
                 }
             }
 			done();
@@ -250,7 +250,7 @@ apiRoutes.delete('/db', function (request, response) {
                     console.error(err);
                     response.json({success: "false", message: err});
                 }else{
-                    response.json({success: "All the contacts were deleted succesfully from the database."});
+                    response.json({success: "All the contacts were deleted with success from the database."});
                 }
             });
         }else{
@@ -295,7 +295,7 @@ apiRoutes.delete('/db', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.json({success: "Contact successfully deleted from the database"});
+                        response.json({success: "Contact deleted with success in the database."});
                     }
                 } else {
                     if (err) {
@@ -303,7 +303,7 @@ apiRoutes.delete('/db', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.status(404).send({failed: "The specified contact could not be found"});
+                        response.status(404).send({failed: "Not Found – The specified contact could not be found"});
                     }
                 }
             });
@@ -480,7 +480,7 @@ apiRoutes.put('/db', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.json({success: "Contact updated successfully in the database"});
+                        response.json({success: "Contact updated with success into database."});
                     }
                 } else {
                     if (err) {
@@ -488,7 +488,7 @@ apiRoutes.put('/db', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.status(404).send({failed: "The specified contact could not be found"});
+                        response.status(404).send({failed: "Not Found – The specified contact could not be found"});
                     }
                 }
             });
