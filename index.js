@@ -3,17 +3,23 @@ var app = express();
 var bodyParser = require('body-parser');
 var pg = require('pg');
 var connectionString = process.env.DATABASE_URL;
+var read = require('./read');
+
 
 
 var client = new pg.Client(connectionString);
 client.connect();
 
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json({type: 'application/json'}));
+
 
 var apiRoutes = express.Router();
 var pageErr = express.Router();
 var apiErr = express.Router();
+
+
 
 module.exports = app;
 
@@ -42,14 +48,11 @@ pageErr.get('*', function(request, response){
             response.json({success: "false", message: err});
         }
         else {
-            response.send("Enter a valid Page!", 400);
+            response.send("Enter a valid Page!.", 404);
         }
     });
 });
-/*
-var x = document.createElement('pageErr');
-x.src = 'pageErr';
-document.head.appendChild(x);*/
+
 
 
 apiErr.get('*', function(request, response){
@@ -59,57 +62,53 @@ apiErr.get('*', function(request, response){
             response.json({success: "false", message: err});
         }
         else {
-            response.send("Enter a valid API", 401);
+            response.send("Enter a valid API.", 400);
         }
     });
 });
 
-//READ ALL
-apiRoutes.get('/db', function (request, response) {
-    pg.connect(process.env.DATABASE_URL, function (err, client, done) {
 
+
+//READ
+
+
+apiRoutes.get('/contact', function (request, response) {
+    pg.connect(process.env.DATABASE_URL, function (err, client, done) {
         client.query('SELECT * FROM Contact;', function (err, result) {
             done();
-            if(result.rows.length != 0) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }else {
-                    //This deletes from result all the numbers that are null
-                    for (var i = 0; i < result.rows.length; i += 1) {
-                        for (var k = 1; k <= 5; k += 1) {
-                            if (result.rows[i]['phonenumber' + (k)] === "" || result.rows[i]['phonenumber' + (k)] === undefined || result.rows[i]['phonenumber' + (k)] === null) {
-                                delete result.rows[i]['phonenumber' + (k)];
-                            }
+
+
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            else {
+                //This deletes from result all the numbers that are null
+                for(var i = 0; i < result.rows.length; i += 1){
+                    for(var k = 1; k <= 5; k += 1) {
+                        if (result.rows[i]['phonenumber' + (k)] === "" || result.rows[i]['phonenumber' + (k)] === undefined || result.rows[i]['phonenumber' + (k)] === null) {
+                            delete result.rows[i]['phonenumber' + (k)];
                         }
                     }
-                    response.json({success: "Database Readed successfuly", data: result.rows});
                 }
-            }else {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }else {
-                    response.json({success: "There are no contacts in the database."});
-                }
+//var test2 = isNaN(request.rows[16].phonenumber1);
+                response.json({success: "Database Readed successfuly.", data: result.rows});
             }
         });
     });
 });
-
-
 //READ with ID
-apiRoutes.get('/db/:id', function (request, response) {
+apiRoutes.get('/contact/:id', function (request, response) {
     pg.connect(process.env.DATABASE_URL, function (err, client, done) {
 
         if (isNaN(request.params.id)) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                else {
-                    response.status(405).send({failed: "Enter a valid ID"});
-                }
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            else {
+                response.status(400).send({error: "Enter a valid ID."});
+            }
         } else {
             client.query('SELECT * FROM Contact WHERE $1 = Contact.id;', [request.params.id], function (err, result) {
                 done();
@@ -119,7 +118,7 @@ apiRoutes.get('/db/:id', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.json({success: "A specific row read successfully", data: result.rows});
+                        response.json({success: "A specific row read successfully.", data: result.rows});
                     }
                 } else {
                     if (err) {
@@ -127,7 +126,8 @@ apiRoutes.get('/db/:id', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.status(404).send({failed: "The specified contact could not be found"});
+                        response.status(404).send({error: "The specified contact could not be found."});
+                        //    response.json({failed:"Contact doesnt exist to update."} );
                     }
                 }
             });
@@ -137,136 +137,113 @@ apiRoutes.get('/db/:id', function (request, response) {
 
 
 //CREATE
-apiRoutes.post('/db', function (request, response) {
+apiRoutes.post('/contact', function (request, response) {
     pg.connect(process.env.DATABASE_URL, function (err, client, done) {
 
         var bodyData = {
             name: request.body.name,
             lastname: request.body.lastname,
             address: request.body.address,
-            email: request.body.email,
             phonenumber1: request.body.phonenumber1,
+            email: request.body.email,
             phonenumber2: request.body.phonenumber2,
             phonenumber3: request.body.phonenumber3,
             phonenumber4: request.body.phonenumber4,
             phonenumber5: request.body.phonenumber5
         };
+        var amehiajo = true;
 
-        var valido = true;
 
-            if ((isNaN(bodyData.phonenumber1) || bodyData.phonenumber1 <= 0) && !(bodyData.phonenumber1 === "" || bodyData.phonenumber1 === undefined)) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                else {
-                    response.status(408).send({failed: "Enter a valid phone-number"});
-                    valido= false;
-                }
-            }
+        //Display after inserted
+        //  client.query('SELECT * FROM Contact', function (err, result) {
 
-            if ((isNaN(bodyData.phonenumber2) || bodyData.phonenumber2 <= 0) && !(bodyData.phonenumber2 === "" || bodyData.phonenumber2 === undefined)) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                else {
-
-                    response.status(408).send({failed: "Enter a valid phone-number"});
-                    valido= false;
-                }
-            }
-
-            if ((isNaN(bodyData.phonenumber3) || bodyData.phonenumber3 <= 0) && !(bodyData.phonenumber3 === "" || bodyData.phonenumber3 === undefined)) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                else {
-                    response.status(408).send({failed: "Enter a valid phone-number"});
-                    valido= false;
-                }
-            }
-
-            if ((isNaN(bodyData.phonenumber4) || bodyData.phonenumber4 <= 0) && !(bodyData.phonenumber4 === "" || bodyData.phonenumber4 === undefined)) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                else {
-                    response.status(408).send({failed: "Enter a valid phone-number"});
-                    valido= false;
-                }
-            }
-
-            if ((isNaN(bodyData.phonenumber5) || bodyData.phonenumber5 <= 0) && !(bodyData.phonenumber5 === "" || bodyData.phonenumber5 === undefined)) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                else {
-                    response.status(408).send({failed: "Enter a valid phone-number"});
-                    valido= false;
-                }
-            }
-
-        done();
-
-            if (bodyData.name === "" || bodyData.name === undefined) {
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                {
-                    response.status(412).send({failed: "Field Name is required"});
-                }
-            } else if(valido){
-
-                //Insert into database
-                client.query("INSERT INTO contact(name, lastname, address, email, phonenumber1, phonenumber2, phonenumber3, phonenumber4, phonenumber5) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);", [bodyData.name, bodyData.lastname, bodyData.address, bodyData.email, bodyData.phonenumber1, bodyData.phonenumber2, bodyData.phonenumber3, bodyData.phonenumber4, bodyData.phonenumber5]);
-
-                done();
-                if (err) {
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }
-                {
-                    response.json({success: "Contact inserted successfully into database"});
-                }
-            }
-			done();
-        });
-    //});
-});
-
-//Delete all the data in the table
-apiRoutes.delete('/db', function (request, response) {
-    pg.connect(process.env.DATABASE_URL, function (err, client, done) {
-        if(request.body.delete === "deleteall"){
-            client.query('TRUNCATE TABLE Contact RESTART IDENTITY;');
-            client.query('SELECT * FROM Contact;', function(err, result){
-                done();
-                if(err){
-                    console.error(err);
-                    response.json({success: "false", message: err});
-                }else{
-                    response.json({success: "All the contacts were deleted succesfully from the database."});
-                }
-            });
-        }else{
-            if(err){
+        if ((isNaN(bodyData.phonenumber1) || bodyData.phonenumber1 <= 0) && !(bodyData.phonenumber1 === "" || bodyData.phonenumber1 === undefined)) {
+            if (err) {
                 console.error(err);
                 response.json({success: "false", message: err});
-            }else{
-                response.json({failed: "Be careful! Enter the right command to delete all contacts with care."});
+            }
+            else {
+                response.status(406).send({failed: "Enter a valid phonenumber."});
+                amehiajo = false;
+               // process.exit(1);
+            }
+        }
+
+        if ((isNaN(bodyData.phonenumber2) || bodyData.phonenumber2 <= 0) && !(bodyData.phonenumber2 === "" || bodyData.phonenumber2 === undefined)) {
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            else {
+
+                response.status(406).send({failed: "Enter a phone valid number."});
+                amehiajo = false;
+            }
+        }
+
+        if ((isNaN(bodyData.phonenumber3) || bodyData.phonenumber3 <= 0) && !(bodyData.phonenumber3 === "" || bodyData.phonenumber3 === undefined)) {
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            else {
+                response.status(406).send({failed: "Enter a phone valid number."});
+                amehiajo = false;
+            }
+        }
+
+        if ((isNaN(bodyData.phonenumber4) || bodyData.phonenumber4 <= 0) && !(bodyData.phonenumber4 === "" || bodyData.phonenumber4 === undefined)) {
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            else {
+                response.status(406).send({failed: "Enter a phone valid number."});
+                amehiajo = false;
+            }
+        }
+
+        if ((isNaN(bodyData.phonenumber5) || bodyData.phonenumber5 <= 0) && !(bodyData.phonenumber5 === "" || bodyData.phonenumber5 === undefined)) {
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            else {
+                response.status(406).send({failed: "Enter a phone valid number."});
+                var amehiajo = true;
+            }
+        }
+
+
+        if (bodyData.name === "" || bodyData.name === undefined) {
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            {
+                response.status(406).send({failed: "Field Name is required."});
+            }
+        } else if(amehiajo){
+
+            //Insert into database
+            client.query("INSERT INTO contact(name, lastname, address, email, phonenumber1, phonenumber2, phonenumber3, phonenumber4, phonenumber5) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9);", [bodyData.name, bodyData.lastname, bodyData.address, bodyData.email, bodyData.phonenumber1, bodyData.phonenumber2, bodyData.phonenumber3, bodyData.phonenumber4, bodyData.phonenumber5]);
+
+             done();
+            if (err) {
+                console.error(err);
+                response.json({success: "false", message: err});
+            }
+            {
+                response.json({success: "Contact inserted successfully into database."});
             }
         }
     });
+    //});
 });
 
 
 //DELETE
-apiRoutes.delete('/db', function (request, response) {
+apiRoutes.delete('/contact', function (request, response) {
     pg.connect(process.env.DATABASE_URL, function (err, client, done) {
 
         var bodyData = {id: request.body.id};
@@ -279,7 +256,7 @@ apiRoutes.delete('/db', function (request, response) {
                     response.json({success: "false", message: err});
                 }
                 else {
-                    response.status(405).send({failed: "Enter a valid ID"});
+                    response.status(400).send({error: "Enter a valid ID."});
                 }
             });
         } else {
@@ -295,7 +272,7 @@ apiRoutes.delete('/db', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.json({success: "Contact successfully deleted from the database"});
+                        response.json({success: "Contact successfully deleted from the database."});
                     }
                 } else {
                     if (err) {
@@ -303,7 +280,7 @@ apiRoutes.delete('/db', function (request, response) {
                         response.json({success: "false", message: err});
                     }
                     else {
-                        response.status(404).send({failed: "The specified contact could not be found"});
+                        response.status(410).send({error: "The specified contact could not be found."});
                     }
                 }
             });
@@ -313,24 +290,22 @@ apiRoutes.delete('/db', function (request, response) {
 
 
 //UPDATE origjinal
-apiRoutes.put('/db', function (request, response) {
+apiRoutes.put('/contact', function (request, response) {
     pg.connect(process.env.DATABASE_URL, function (err, client, done) {
 
         var bodyData = {
-            id: request.body.id,
             name: request.body.name,
             lastname: request.body.lastname,
             address: request.body.address,
-            email: request.body.email,
             phonenumber1: request.body.phonenumber1,
+            email: request.body.email,
             phonenumber2: request.body.phonenumber2,
             phonenumber3: request.body.phonenumber3,
             phonenumber4: request.body.phonenumber4,
             phonenumber5: request.body.phonenumber5
         };
-            var valido = true;
-
-        if ((isNaN(request.body.id) || request.body.id <= 0) || (request.body.id === "" || bodyData.id === undefined)) {
+        var amehiajo = true;
+        if ((isNaN(request.body.id) || request.body.id <= 0) || (request.body.id === "" || request.body.id === undefined)) {
             client.query('SELECT * FROM Contact', function (err, result) {
                 done();
                 if (err) {
@@ -366,15 +341,15 @@ apiRoutes.put('/db', function (request, response) {
                     }else if (bodyData.lastname === ""){
                         bodyData.lastname = null;
                     }
-                    if (bodyData.address === null || bodyData.address === undefined) {
-                        bodyData.address = address;
-                    }else if (bodyData.address === ""){
-                        bodyData.address = null;
-                    }
                     if (bodyData.email === null || bodyData.email === undefined) {
                         bodyData.email = email;
                     }else if (bodyData.email === ""){
                         bodyData.email = null;
+                    }
+                    if (bodyData.address === null || bodyData.address === undefined) {
+                        bodyData.address = address;
+                    }else if (bodyData.address === ""){
+                        bodyData.address = null;
                     }
                     if (bodyData.phonenumber1 === null || bodyData.phonenumber1 === undefined) {
                         bodyData.phonenumber1 = phonenumber1;
@@ -403,14 +378,14 @@ apiRoutes.put('/db', function (request, response) {
                     }
 
 
-                    if ((isNaN(bodyData.phonenumber1) || bodyData.phonenumber1 <= 0) && !(bodyData.phonenumber1 === "" || bodyData.phonenumber1 === undefined)&& bodyData.phonenumber1 !== null) {
+                    if ((isNaN(bodyData.phonenumber1) || bodyData.phonenumber1 <= 0)  && !(bodyData.phonenumber1 === "" || bodyData.phonenumber1 === undefined) && bodyData.phonenumber1 !== null) {
                         if (err) {
                             console.error(err);
                             response.json({success: "false", message: err});
                         }
                         else {
-                            response.status(408).send({failed: "Enter a valid phone-number"});
-                            valido= false;
+                            response.status(406).send({failed: "Enter a valid phonenumber."});
+                            amehiajo = false;
                         }
                     }
 
@@ -421,8 +396,8 @@ apiRoutes.put('/db', function (request, response) {
                         }
                         else {
 
-                            response.status(408).send({failed: "Enter a valid phone-number"});
-                            valido= false;
+                            response.status(406).send({failed: "Enter a phone valid number."});
+                            amehiajo = false;
                         }
                     }
 
@@ -432,8 +407,8 @@ apiRoutes.put('/db', function (request, response) {
                             response.json({success: "false", message: err});
                         }
                         else {
-                            response.status(408).send({failed: "Enter a valid phone-number"});
-                            valido= false;
+                            response.status(406).send({failed: "Enter a phone valid number."});
+                            amehiajo = false;
                         }
                     }
 
@@ -443,8 +418,8 @@ apiRoutes.put('/db', function (request, response) {
                             response.json({success: "false", message: err});
                         }
                         else {
-                            response.status(408).send({failed: "Enter a valid phone-number"});
-                            valido= false;
+                            response.status(406).send({failed: "Enter a phone valid number."});
+                            amehiajo = false;
                         }
                     }
 
@@ -454,14 +429,15 @@ apiRoutes.put('/db', function (request, response) {
                             response.json({success: "false", message: err});
                         }
                         else {
-                            response.status(408).send({failed: "Enter a valid phone-number"});
-                            valido= false;
+                            response.status(406).send({failed: "Enter a phone valid number."});
+                            amehiajo = false;
                         }
                     }
 
+
                     //ketu behet check qe te mos behet update pa i plotsu kushtet
                     if ((bodyData.phonenumber1 >= 0 && bodyData.phonenumber1 !== null)  || (bodyData.phonenumber2 >= 0 && bodyData.phonenumber2 !== null) || (bodyData.phonenumber3 >= 0 && bodyData.phonenumber3 !== null) || (bodyData.phonenumber4 >= 0 && bodyData.phonenumber4 !== null) || (bodyData.phonenumber5 >= 0 && bodyData.phonenumber5 !== null)) {             //Update data in the database
-                        if (valido)
+                        if (amehiajo)
                         client.query("UPDATE Contact SET name = $1, lastname = $2, address = $3, email = $4, phonenumber1 = $5, phonenumber2 = $6, phonenumber3 = $7, phonenumber4 = $8, phonenumber5 = $9 WHERE id = $10", [bodyData.name, bodyData.lastname, bodyData.address, bodyData.email, bodyData.phonenumber1, bodyData.phonenumber2, bodyData.phonenumber3, bodyData.phonenumber4, bodyData.phonenumber5, request.body.id]);
                     } else {
                         if (err) {
@@ -470,9 +446,13 @@ apiRoutes.put('/db', function (request, response) {
                         }
                         else {
                             response.status(408).send({failed: "Enter a valid phone-number"});
-
                         }
                     }
+
+
+
+
+
 
 
                     if (err) {
@@ -504,3 +484,4 @@ apiRoutes.get('/hello', function (request, response) {
 app.listen(app.get('port'), function () {
     console.log('Node app is running on port:', app.get('port'));
 });
+

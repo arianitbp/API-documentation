@@ -1,31 +1,38 @@
-
 {
-  "name": "node-js-getting-started",
-  "version": "0.1.4",
-  "description": "A sample Node.js app using Express 4",
+  "name": "node-api",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-      "dependencies": {
-	"pg": "4.x",
+  "dependencies": {
+    "body-parser": "~1.6.2",
+    "cookie-parser": "~1.0.1",
     "ejs": "^2.3.1",
-    "express": "~4.9.x",
-	"mongoose": "~3.6.13",
-    "body-parser": "~1.0.1",
-    "cool-ascii-faces": "~1.3.x"
+    "express": "~4.0.0",
+    "http": "~0.0.0",
+    "jade": "*",
+    "logfmt": "~1.1.2",
+    "mongoose": "~3.6.13",
+    "pg": "^4.4.1",
+    "serve-favicon": "*"
   },
-  "engines": {
-    "node": "0.12.2"
+  "devDependencies": {
+    "supersamples": "^0.4.1",
+    "supertest": "^1.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node App.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heroku/node-js-getting-started"
+    "url": "https://github.com/JitendraZaa/node-postgres"
+  },
+  "engines": {
+    "node": "0.10.x"
   },
   "keywords": [
-    "node",
-    "heroku",
-    "express"
+    "Salesforce",
+    "Tooling",
+    "API"
   ],
+  "author": "Jitendra Zaa",
   "license": "MIT"
 }
